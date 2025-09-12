@@ -1,48 +1,116 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import '../models/user.dart';
 
 class ApiService {
-  static const baseUrl = 'https://jsonplaceholder.typicode.com';
+  static const String baseUrl = "http://10.0.2.2:3000/api/auth"; // Emulator loopback
+  final storage = const FlutterSecureStorage();
 
-  //   static Future<List<dynamic>> fetchSpeciesRules() async {
-  //   final resp = await http.get(Uri.parse('$baseUrl/species_rules'));
-
-  //   if (resp.statusCode == 200) return jsonDecode(resp.body);
-  //   throw Exception('Failed to load species rules');
-  // }
-
-  // dummy
-  static Future<List<dynamic>> fetchSpeciesRules() async {
-    final resp = await http.get(Uri.parse('$baseUrl/posts'));
-    if (resp.statusCode == 200) {
-      final list = jsonDecode(resp.body) as List;
-      // map to your expected fields
-      return list.map((item) => {
-        'speciesCode': item['id'].toString(),
-        'commonName': item['title'] ?? 'Unknown',
-        'geoFence': null,
-      }).toList();
-    }
-    throw Exception('Failed to load species rules');
-  }
-
-  static Future<Map<String, dynamic>> uploadPhoto(File file) async {
-    final uri = Uri.parse('$baseUrl/upload');
-    final request = http.MultipartRequest('POST', uri);
-    request.files.add(await http.MultipartFile.fromPath('file', file.path));
-    final streamed = await request.send();
-    final resp = await http.Response.fromStream(streamed);
-    if (resp.statusCode == 200) return jsonDecode(resp.body);
-    throw Exception('Upload failed');
-  }
-
-  static Future<bool> submitCollection(Map<String, dynamic> payload) async {
-    final resp = await http.post(
-      Uri.parse('$baseUrl/collection_events'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(payload),
+  // -----------------------------
+  // Register Farmer / Any orgType
+  // -----------------------------
+  Future<User> registerFarmer({
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+    required String organizationId,
+    String? blockchainIdentity,
+    required String orgType,
+  }) async {
+    final url = Uri.parse('$baseUrl/register');
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "email": email,
+        "password": password,
+        "firstName": firstName,
+        "lastName": lastName,
+        "organizationId": organizationId,
+        "orgType": orgType,
+        "blockchainIdentity": blockchainIdentity ?? "none",
+      }),
     );
-    return resp.statusCode == 201 || resp.statusCode == 200;
+
+    final data = jsonDecode(response.body);
+    print("Register response: $data"); // ✅ Debug
+
+    if (response.statusCode == 201) {
+      if (data['user'] == null) {
+        throw Exception("Registration failed: User data missing in response");
+      }
+      return User.fromJson(data['user']);
+    } else {
+      throw Exception(data['message'] ?? 'Registration failed');
+    }
+  }
+
+  // -----------------------------
+  // Login Farmer
+  // -----------------------------
+  Future<String> loginFarmer({required String email, required String password}) async {
+    final url = Uri.parse('$baseUrl/login');
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"email": email, "password": password}),
+    );
+
+    final data = jsonDecode(response.body);
+    print("Login response: $data"); // Debug
+
+    if (response.statusCode == 200) {
+      final token = data['data']['token']; // ✅ Correct path
+      if (token == null || token.isEmpty) {
+        throw Exception('Login failed: Token missing');
+      }
+
+      await storage.write(key: 'jwt_token', value: token);
+      return token;
+    } else {
+      throw Exception(data['message'] ?? 'Login failed');
+    }
+  }
+
+
+
+  // -----------------------------
+  // Get Current User Profile
+  // -----------------------------
+  Future<User> getProfile() async {
+    final token = await storage.read(key: 'jwt_token');
+    if (token == null || token.isEmpty) {
+      throw Exception("Token not found. Please login first.");
+    }
+
+    final url = Uri.parse('$baseUrl/me');
+    final response = await http.get(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token"
+      },
+    );
+
+    final data = jsonDecode(response.body);
+    print("Profile response: $data"); // ✅ Debug
+
+    if (response.statusCode == 200) {
+      if (data['user'] == null) {
+        throw Exception("Failed to fetch profile: User data missing");
+      }
+      return User.fromJson(data['user']);
+    } else {
+      throw Exception(data['message'] ?? 'Failed to fetch profile');
+    }
+  }
+
+  // -----------------------------
+  // Logout
+  // -----------------------------
+  Future<void> logout() async {
+    await storage.delete(key: 'jwt_token');
   }
 }

@@ -1,30 +1,84 @@
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
+// import 'providers/auth_provider.dart';
+// import 'screens/login_screen.dart';
+
+// // void main() {
+// //   runApp(const MyApp());
+// // }
+
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   final authProvider = AuthProvider();
+//   try {
+//     await authProvider.fetchProfile(); // loads user from saved token
+//   } catch (_) {}
+//   runApp(
+//     ChangeNotifierProvider(
+//       create: (_) => authProvider,
+//       child: const MyApp(),
+//     ),
+//   );
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return ChangeNotifierProvider(
+//       create: (_) => AuthProvider(),
+//       child: MaterialApp(
+//         title: 'Farmer App',
+//         theme: ThemeData(primarySwatch: Colors.green),
+//         home: const LoginScreen(),
+//       ),
+//     );
+//   }
+// }
+
+
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'pages/species_list_page.dart';
-import 'pages/collection_form_page.dart';
-import 'pages/offline_queue_page.dart';
-import 'services/sync_service.dart';
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
+import 'providers/collection_provider.dart';
+import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
-  await Hive.openBox('pending_collections'); // simple box for offline queue
-  SyncService.start(); // start listener to auto-sync when online
-  runApp(MyApp());
+
+  final authProvider = AuthProvider();
+  try {
+    await authProvider.fetchProfile(); // Load user if token exists
+  } catch (_) {}
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: authProvider), // existing
+        ChangeNotifierProvider(create: (_) => CollectionProvider(authProvider)), // 👈 add this
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PrakritiCollector',
+      title: 'Farmer App',
       theme: ThemeData(primarySwatch: Colors.green),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => SpeciesListPage(),
-        '/collect': (context) => CollectionFormPage(),
-        '/queue': (context) => OfflineQueuePage(),
-      },
+      home: Consumer<AuthProvider>(
+        builder: (context, auth, _) {
+          return auth.user == null
+              ? const LoginScreen()
+              : const HomeScreen();
+        },
+      ),
     );
   }
 }
