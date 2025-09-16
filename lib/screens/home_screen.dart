@@ -128,25 +128,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         backgroundColor: primaryGreen,
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.eco, color: Colors.white, size: 20),
+            Image.asset(
+              'assets/images/logo_w.png',
+              height: 36,
+              fit: BoxFit.contain,
             ),
             const SizedBox(width: 12),
-            const Text(
-              'AyuTrace',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
-            ),
           ],
         ),
+
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
