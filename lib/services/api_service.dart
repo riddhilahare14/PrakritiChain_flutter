@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../models/user.dart';
+import '../config.dart';
 
 class ApiService {
-  static const String baseUrl = "http://10.0.2.2:3000/api/auth"; // Emulator loopback
+  // static const String baseUrl = "http://10.0.2.2:3000/api/auth"; // Emulator loopback
+  static const String baseUrl = '${AppConfig.baseUrl}/api/auth';
   final storage = const FlutterSecureStorage();
 
   // -----------------------------
