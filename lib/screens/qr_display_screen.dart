@@ -397,7 +397,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                     children: [
                       Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: _downloadQRCode,
+                        onPressed: _copyQRHash,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blueGrey,
                           foregroundColor: Colors.white,
@@ -407,7 +407,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                           ),
                         ),
                         icon: const Icon(Icons.download),
-                        label: const Text("Download"),
+                        label: const Text("Copy QR"),
                       ),
                     ),
                     const SizedBox(width: 12),

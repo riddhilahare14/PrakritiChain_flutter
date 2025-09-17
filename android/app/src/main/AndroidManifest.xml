@@ -2,6 +2,12 @@
 
     <!-- ✅ Add these permissions here (before <application>) -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    
+    <!-- For approximate location (coarse accuracy, e.g., city-level) -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- For precise location (GPS-level accuracy) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
