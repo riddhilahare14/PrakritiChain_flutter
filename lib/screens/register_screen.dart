@@ -419,7 +419,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 setState(() => loading = true);
                                 try {
                                   const defaultOrganizationId =
-                                      "89982bac-c0d0-48a9-be9a-cd93a5502148";
+                                      "ef71686b-bd1d-4c2f-8d2c-cf9210114185";
                                   await authProvider.register(
                                     email: emailController.text,
                                     password: passwordController.text,

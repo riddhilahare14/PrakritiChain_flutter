@@ -1,5 +1,5 @@
 // lib/config.dart
 class AppConfig {
-  static const String baseUrl = "http://192.168.0.103:3000"; // dev
+  static const String baseUrl = "https://0b7fa9f074e9.ngrok-free.app"; // dev
   // static const String baseUrl = "https://myproductionapi.com"; // prod
 }
