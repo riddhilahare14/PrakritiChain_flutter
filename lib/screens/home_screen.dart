@@ -12,7 +12,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> 
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   bool _isLoading = true;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -20,6 +21,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // Add lifecycle observer
+    
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -35,8 +38,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // Remove lifecycle observer
     _animationController.dispose();
     super.dispose();
+  }
+
+  // FIXED: Listen to app lifecycle changes
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // Refresh collections when app comes to foreground
+      _refreshCollections();
+    }
+  }
+
+  // FIXED: Detect when screen becomes visible again
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // This will trigger when navigating back to this screen
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent && !_isLoading) {
+      _refreshCollections();
+    }
   }
 
   Future<void> _loadCollections() async {
@@ -64,7 +89,49 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Future<void> _refreshCollections() async {
     final collectionProvider =
         Provider.of<CollectionProvider>(context, listen: false);
-    await collectionProvider.fetchCollections();
+    
+    try {
+      await collectionProvider.fetchCollections();
+    } catch (e) {
+      debugPrint("Error refreshing collections: $e");
+      // Optionally show a snackbar for errors
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to refresh collections: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // FIXED: Manual refresh method with loading indicator
+  Future<void> _manualRefresh() async {
+    final collectionProvider =
+        Provider.of<CollectionProvider>(context, listen: false);
+    
+    try {
+      await collectionProvider.fetchCollections();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Collections refreshed successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to refresh: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -74,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     // Color Palette: Green and Off-White/Gray
     const Color primaryGreen = Color(0xFF2E7D32);
     const Color accentGreen = Color(0xFF66BB6A);
-    const Color lightBackground = Color(0xFFF9F9F9); // Soft gray/off-white
+    const Color lightBackground = Color(0xFFF9F9F9);
     const Color cardBackground = Colors.white;
     const Color textColor = Color(0xFF424242);
     const Color subtitleColor = Color(0xFF757575);
@@ -126,18 +193,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       appBar: AppBar(
         elevation: 0,
         backgroundColor: primaryGreen,
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/images/logo_w.png',
-              height: 36,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(width: 12),
-          ],
+        // title: Row(
+        //   children: [
+        //     Image.asset(
+        //       'assets/images/logo_w.png',
+        //       height: 36,
+        //       fit: BoxFit.contain,
+        //     ),
+        //     const SizedBox(width: 12),
+        //   ],
+        // ),
+        title: Image.asset(
+          'assets/images/logo_w.png',
+          height: 36,
         ),
-
         actions: [
+          // FIXED: Added refresh button to AppBar
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _manualRefresh,
+            tooltip: 'Refresh Collections',
+          ),
           Container(
             margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
             child: ElevatedButton.icon(
@@ -302,12 +378,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ),
                 ),
                 onPressed: () async {
-                  final added = await Navigator.push(
+                  // FIXED: Navigate and wait for result, then refresh
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => const NewCollectionScreen()),
+                      builder: (_) => const NewCollectionScreen(),
+                    ),
                   );
-                  if (added == true) {
+                  
+                  // Refresh collections after returning from NewCollectionScreen
+                  if (result == true) {
                     await _refreshCollections();
                   }
                 },

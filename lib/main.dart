@@ -1,43 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-// import 'providers/auth_provider.dart';
-// import 'screens/login_screen.dart';
-
-// // void main() {
-// //   runApp(const MyApp());
-// // }
-
-// void main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
-//   final authProvider = AuthProvider();
-//   try {
-//     await authProvider.fetchProfile(); // loads user from saved token
-//   } catch (_) {}
-//   runApp(
-//     ChangeNotifierProvider(
-//       create: (_) => authProvider,
-//       child: const MyApp(),
-//     ),
-//   );
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return ChangeNotifierProvider(
-//       create: (_) => AuthProvider(),
-//       child: MaterialApp(
-//         title: 'Farmer App',
-//         theme: ThemeData(primarySwatch: Colors.green),
-//         home: const LoginScreen(),
-//       ),
-//     );
-//   }
-// }
-
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
@@ -71,6 +31,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Farmer App',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.green),
       home: Consumer<AuthProvider>(
         builder: (context, auth, _) {

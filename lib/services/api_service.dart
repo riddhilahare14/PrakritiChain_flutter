@@ -39,14 +39,10 @@ class ApiService {
     final data = jsonDecode(response.body);
     print("Register response: $data"); // ✅ Debug
 
-    // if (response.statusCode == 201) {
-    //   if (data['user'] == null) {
-    //     throw Exception("Registration failed: User data missing in response");
-    //   }
-    //   return User.fromJson(data['user']);
-    // } else {
-    //   throw Exception(data['message'] ?? 'Registration failed');
-    // }
+    print("Status code: ${response.statusCode}");
+    print("Response body: ${response.body}");
+
+
     if (response.statusCode == 201) {
       final userJson = data['data']?['user']; // 🔑 Correct path
       if (userJson == null) {

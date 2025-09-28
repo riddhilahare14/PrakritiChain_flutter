@@ -77,25 +77,20 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
 
   Future<void> _shareQRCode() async {
     try {
-      // Get the QR image data URL
       final qrImage = widget.qrCodeData['qrImage'] as String?;
       if (qrImage != null && qrImage.startsWith('data:image')) {
-        // Extract base64 data
         final base64Data = qrImage.split(',')[1];
         final bytes = base64Decode(base64Data);
         
-        // Save to temporary file
         final tempDir = await getTemporaryDirectory();
         final file = File('${tempDir.path}/qr_code_${widget.batchId}.png');
         await file.writeAsBytes(bytes);
         
-        // Share the file
         await Share.shareXFiles(
           [XFile(file.path)],
           text: 'QR Code for ${widget.herbName} - Batch ID: ${widget.batchId}',
         );
       } else {
-        // Fallback to sharing text
         await Share.share(
           'QR Hash: ${widget.qrCodeData['qrHash']}\nBatch ID: ${widget.batchId}\nHerb: ${widget.herbName}',
         );
@@ -114,11 +109,9 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
     try {
       final qrImage = widget.qrCodeData['qrImage'] as String?;
       if (qrImage != null && qrImage.startsWith('data:image')) {
-        // Extract base64 image data
         final base64Data = qrImage.split(',')[1];
         final bytes = base64Decode(base64Data);
 
-        // Choose directory based on platform
         Directory? dir;
 
         if (Platform.isAndroid) {
@@ -156,9 +149,6 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
       );
     }
   }
-
-
-
 
   Widget _buildInfoCard({
     required IconData icon,
@@ -396,25 +386,28 @@ class _QRDisplayScreenState extends State<QRDisplayScreen>
                   Row(
                     children: [
                       Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _copyQRHash,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueGrey,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                        child: ElevatedButton.icon(
+                          onPressed: _copyQRHash,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueGrey,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
+                          icon: const Icon(Icons.copy),
+                          label: const Text("Copy QR"),
                         ),
-                        icon: const Icon(Icons.download),
-                        label: const Text("Copy QR"),
                       ),
-                    ),
-                    const SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () {
+                            // FIXED: Navigate back and trigger refresh
                             Navigator.of(context).popUntil((route) => route.isFirst);
+                            // Trigger a refresh by calling the callback if needed
+                            // This will be handled by HomeScreen's didChangeDependencies or resume lifecycle
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryGreen,
